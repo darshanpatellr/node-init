@@ -1,10 +1,11 @@
+require('dotenv').config({
+    path: require('path').join(__dirname, '../.env')
+});
 const express = require('express');
 const https = require('https');
 const fs = require('fs');
 const path = require('path');
 const helmet = require('helmet');
-const {response, request} = require("express");
-const http = require("node:http"); // Security middleware
 
 //   Create express app
 const app = express();
@@ -53,8 +54,8 @@ app.use((request, response) => {
 
 // SSL/TLS options
 const sslOptions = {
-    key: fs.readFileSync(path.join(__dirname, '../key.pem')),
-    cert: fs.readFileSync(path.join(__dirname, '../cert.pem')),
+    key: fs.readFileSync(path.resolve(__dirname, process.env.SSL_KEY_PATH)),
+    cert: fs.readFileSync(path.resolve(__dirname, process.env.SSL_CERT_PATH)),
     // Enable HTTP/2 if available
     allowHTTP1: true,
     // Recommended security options
@@ -77,7 +78,6 @@ const sslOptions = {
     honorCipherOrder: true
 };
 
-const PORT = process.env.PORT || 3000;
 const server = https.createServer(sslOptions, app);
 
 // Handle unhandled promise rejections
@@ -114,7 +114,10 @@ process.on('SIGTERM', gracefulShutdown);
 process.on('SIGINT', gracefulShutdown);
 
 // Start the server
+// Access environment variables
+const PORT = process.env.PORT || 3000;
 const HOST = process.env.HOST || '0.0.0.0';
+
 server.listen(PORT, HOST, () => {
     console.log(`Express server running at https://${HOST}:${PORT}`);
     console.log('Environment:', process.env.NODE_ENV || 'development');
